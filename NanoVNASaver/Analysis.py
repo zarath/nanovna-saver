@@ -1329,13 +1329,33 @@ class VSWRAnalysis(Analysis):
 class MagLoopAnalysis(VSWRAnalysis):
     max_dips_shown = 1
     vswr_limit = 2.56
+    
+    def _get_freq_from_index(self, index):
+        
+        return self.app.data[index].freq
+    
+    def _get_new_sweep(self, start,end,factor=5, hamband=False):
+        '''
+        
+        '''
+        # TODO: find near hamband and include
+        band = end-start
+        newstart = start-band*factor/2
+        newend = end+band*factor/2
+        return newstart,newend
 
     def runAnalysis(self):
 
         super().runAnalysis()
 
         for m in self.minimums:
-                start, lowest, end = m
+                start, lowest, end = map(self._get_freq_from_index, m)
+
                 if start != end:
-                    Q = self.app.data[lowest].freq/(self.app.data[end].freq-self.app.data[start].freq)
+                    Q = lowest/(end-start)
                     self.layout.addRow("Q",QtWidgets.QLabel("{}".format(int(Q))))
+                newstart,newend = self._get_new_sweep(start,end)
+                self.app.sweepStartInput.setText(RFTools.formatSweepFrequency(int(newstart)))
+                self.app.sweepEndInput.setText(RFTools.formatSweepFrequency(int(newend)))
+                # todo, change sweep and run sweep
+
