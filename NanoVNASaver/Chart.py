@@ -62,6 +62,8 @@ class Chart(QtWidgets.QWidget):
     draggedBox = False
     draggedBoxStart = (0, 0)
     draggedBoxCurrent = (-1, -1)
+    moveStartX = -1
+    moveStartY = -1
 
     isPopout = False
     popoutRequested = pyqtSignal(object)
@@ -204,12 +206,18 @@ class Chart(QtWidgets.QWidget):
         if event.buttons() == QtCore.Qt.RightButton:
             event.ignore()
             return
+        elif event.buttons() == QtCore.Qt.MiddleButton:
+            # Drag event
+            event.accept()
+            self.moveStartX = event.x()
+            self.moveStartY = event.y()
+            return
         if event.modifiers() == QtCore.Qt.ShiftModifier:
             self.draggedMarker = self.getNearestMarker(event.x(), event.y())
         elif event.modifiers() == QtCore.Qt.ControlModifier:
+            event.accept()
             self.draggedBox = True
             self.draggedBoxStart = (event.x(), event.y())
-            event.accept()
             return
         self.mouseMoveEvent(event)
 
@@ -593,6 +601,18 @@ class FrequencyChart(Chart):
         if a0.buttons() == QtCore.Qt.RightButton:
             a0.ignore()
             return
+        if a0.buttons() == QtCore.Qt.MiddleButton:
+            # Drag the display
+            a0.accept()
+            if self.moveStartX != -1 and self.moveStartY != -1:
+                dx = self.moveStartX - a0.x()
+                dy = self.moveStartY - a0.y()
+                self.zoomTo(self.leftMargin + dx, self.topMargin + dy,
+                            self.leftMargin + self.chartWidth + dx, self.topMargin + self.chartHeight + dy)
+
+            self.moveStartX = a0.x()
+            self.moveStartY = a0.y()
+            return
         if a0.modifiers() == QtCore.Qt.ControlModifier:
             # Dragging a box
             if not self.draggedBox:
@@ -852,11 +872,11 @@ class PhaseChart(FrequencyChart):
         if self.unwrap:
             rawData = []
             for d in self.data:
-                rawData.append(RFTools.phaseAngleRadians(d))
+                rawData.append(d.phase)
 
             rawReference = []
             for d in self.reference:
-                rawReference.append(RFTools.phaseAngleRadians(d))
+                rawReference.append(d.phase)
 
             self.unwrappedData = np.degrees(np.unwrap(rawData))
             self.unwrappedReference = np.degrees(np.unwrap(rawReference))
@@ -935,9 +955,9 @@ class PhaseChart(FrequencyChart):
             elif d in self.reference:
                 angle = self.unwrappedReference[self.reference.index(d)]
             else:
-                angle = RFTools.phaseAngle(d)
+                angle = math.degrees(d.phase)
         else:
-            angle = RFTools.phaseAngle(d)
+            angle = math.degrees(d.phase)
         return self.topMargin + round((self.maxAngle - angle) / self.span * self.chartHeight)
 
     def valueAtPosition(self, y) -> List[float]:
@@ -3549,11 +3569,11 @@ class GroupDelayChart(FrequencyChart):
     def calculateGroupDelay(self):
         rawData = []
         for d in self.data:
-            rawData.append(RFTools.phaseAngleRadians(d))
+            rawData.append(d.phase)
 
         rawReference = []
         for d in self.reference:
-            rawReference.append(RFTools.phaseAngleRadians(d))
+            rawReference.append(d.phase)
 
         if len(self.data) > 0:
             self.unwrappedData = np.degrees(np.unwrap(rawData))
