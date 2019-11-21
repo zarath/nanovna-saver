@@ -21,6 +21,8 @@ from PyQt5 import QtWidgets
 from NanoVNASaver.RFTools import RFTools
 from scipy import signal
 import numpy as np
+from PyQt5.Qt import QEventLoop
+from PyQt5.Qt import QTimer
 
 logger = logging.getLogger(__name__)
 
@@ -1340,6 +1342,8 @@ class MagLoopAnalysis(VSWRAnalysis):
         '''
         # TODO: find near hamband and include
         band = end-start
+        if band <= 1000:
+            band = 3000
         newstart = start-band*factor/2
         newend = end+band*factor/2
         return newstart,newend
@@ -1348,7 +1352,8 @@ class MagLoopAnalysis(VSWRAnalysis):
 
         super().runAnalysis()
 
-        for m in self.minimums:
+        if self.minimums:
+            for m in self.minimums:
                 start, lowest, end = map(self._get_freq_from_index, m)
 
                 if start != end:
@@ -1357,5 +1362,20 @@ class MagLoopAnalysis(VSWRAnalysis):
                 newstart,newend = self._get_new_sweep(start,end)
                 self.app.sweepStartInput.setText(RFTools.formatSweepFrequency(int(newstart)))
                 self.app.sweepEndInput.setText(RFTools.formatSweepFrequency(int(newend)))
+                self.app.sweepStartInput.textChanged.emit(self.app.sweepStartInput.text())
+                
                 # todo, change sweep and run sweep
+        else:
+            # No minimum, find
+            self.app.sweepStartInput.setText("3M")
+            self.app.sweepEndInput.setText("30M")
+            self.app.sweepStartInput.textChanged.emit(self.app.sweepStartInput.text())
 
+        if self.app.worker.continuousSweep:
+            self.app.stopSweep()
+            loop = QEventLoop()
+            QTimer.singleShot(500, loop.quit)
+            loop.exec_()
+            self.app.sweep()
+            
+            
