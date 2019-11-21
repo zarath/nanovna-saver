@@ -48,8 +48,8 @@ class Analysis:
             return 0, 0
         frequency1 = self.app.data21[location1].freq
         frequency2 = self.app.data21[location2].freq
-        gain1 = RFTools.gain(self.app.data21[location1])
-        gain2 = RFTools.gain(self.app.data21[location2])
+        gain1 = self.app.data21[location1].gain
+        gain2 = self.app.data21[location2].gain
         frequency_factor = frequency2 / frequency1
         if frequency_factor < 1:
             frequency_factor = 1 / frequency_factor
@@ -107,13 +107,13 @@ class LowPassAnalysis(Analysis):
             self.result_label.setText("Please place " + self.app.markers[0].name  + " in the passband.")
             return
 
-        pass_band_db = RFTools.gain(self.app.data21[pass_band_location])
+        pass_band_db = self.app.data21[pass_band_location].gain
 
         logger.debug("Initial passband gain: %d", pass_band_db)
 
         initial_cutoff_location = -1
         for i in range(pass_band_location, len(self.app.data21)):
-            db = RFTools.gain(self.app.data21[i])
+            db = self.app.data21[i].gain
             if (pass_band_db - db) > 3:
                 # We found a cutoff location
                 initial_cutoff_location = i
@@ -128,9 +128,9 @@ class LowPassAnalysis(Analysis):
         logger.debug("Found initial cutoff frequency at %d", initial_cutoff_frequency)
 
         peak_location = -1
-        peak_db = RFTools.gain(self.app.data21[initial_cutoff_location])
+        peak_db = self.app.data21[initial_cutoff_location].gain
         for i in range(0, initial_cutoff_location):
-            db = RFTools.gain(self.app.data21[i])
+            db = self.app.data21[i].gain
             if db > peak_db:
                 peak_db = db
                 peak_location = i
@@ -143,14 +143,14 @@ class LowPassAnalysis(Analysis):
         cutoff_location = -1
         pass_band_db = peak_db
         for i in range(peak_location, len(self.app.data21)):
-            db = RFTools.gain(self.app.data21[i])
+            db = self.app.data21[i].gain
             if (pass_band_db - db) > 3:
                 # We found the cutoff location
                 cutoff_location = i
                 break
 
         cutoff_frequency = self.app.data21[cutoff_location].freq
-        cutoff_gain = RFTools.gain(self.app.data21[cutoff_location]) - pass_band_db
+        cutoff_gain = self.app.data21[cutoff_location].gain - pass_band_db
         if cutoff_gain < -4:
             logger.debug("Cutoff frequency found at %f dB - insufficient data points for true -3 dB point.",
                          cutoff_gain)
@@ -163,7 +163,7 @@ class LowPassAnalysis(Analysis):
 
         six_db_location = -1
         for i in range(cutoff_location, len(self.app.data21)):
-            db = RFTools.gain(self.app.data21[i])
+            db = self.app.data21[i].gain
             if (pass_band_db - db) > 6:
                 # We found 6dB location
                 six_db_location = i
@@ -177,7 +177,7 @@ class LowPassAnalysis(Analysis):
 
         ten_db_location = -1
         for i in range(cutoff_location, len(self.app.data21)):
-            db = RFTools.gain(self.app.data21[i])
+            db = self.app.data21[i].gain
             if (pass_band_db - db) > 10:
                 # We found 6dB location
                 ten_db_location = i
@@ -185,7 +185,7 @@ class LowPassAnalysis(Analysis):
 
         twenty_db_location = -1
         for i in range(cutoff_location, len(self.app.data21)):
-            db = RFTools.gain(self.app.data21[i])
+            db = self.app.data21[i].gain
             if (pass_band_db - db) > 20:
                 # We found 6dB location
                 twenty_db_location = i
@@ -193,7 +193,7 @@ class LowPassAnalysis(Analysis):
 
         sixty_db_location = -1
         for i in range(six_db_location, len(self.app.data21)):
-            db = RFTools.gain(self.app.data21[i])
+            db = self.app.data21[i].gain
             if (pass_band_db - db) > 60:
                 # We found 60dB location! Wow.
                 sixty_db_location = i
@@ -267,13 +267,13 @@ class HighPassAnalysis(Analysis):
             self.result_label.setText("Please place " + self.app.markers[0].name + " in the passband.")
             return
 
-        pass_band_db = RFTools.gain(self.app.data21[pass_band_location])
+        pass_band_db = self.app.data21[pass_band_location].gain
 
         logger.debug("Initial passband gain: %d", pass_band_db)
 
         initial_cutoff_location = -1
         for i in range(pass_band_location, -1, -1):
-            db = RFTools.gain(self.app.data21[i])
+            db = self.app.data21[i].gain
             if (pass_band_db - db) > 3:
                 # We found a cutoff location
                 initial_cutoff_location = i
@@ -288,10 +288,9 @@ class HighPassAnalysis(Analysis):
         logger.debug("Found initial cutoff frequency at %d", initial_cutoff_frequency)
 
         peak_location = -1
-        peak_db = RFTools.gain(self.app.data21[initial_cutoff_location])
+        peak_db = self.app.data21[initial_cutoff_location].gain
         for i in range(len(self.app.data21) - 1, initial_cutoff_location - 1, -1):
-            db = RFTools.gain(self.app.data21[i])
-            if db > peak_db:
+            if self.app.data21[i].gain > peak_db:
                 peak_db = db
                 peak_location = i
 
@@ -303,14 +302,13 @@ class HighPassAnalysis(Analysis):
         cutoff_location = -1
         pass_band_db = peak_db
         for i in range(peak_location, -1, -1):
-            db = RFTools.gain(self.app.data21[i])
-            if (pass_band_db - db) > 3:
+            if (pass_band_db - self.app.data21[i].gain) > 3:
                 # We found the cutoff location
                 cutoff_location = i
                 break
 
         cutoff_frequency = self.app.data21[cutoff_location].freq
-        cutoff_gain = RFTools.gain(self.app.data21[cutoff_location]) - pass_band_db
+        cutoff_gain = self.app.data21[cutoff_location].gain - pass_band_db
         if cutoff_gain < -4:
             logger.debug("Cutoff frequency found at %f dB - insufficient data points for true -3 dB point.",
                          cutoff_gain)
@@ -324,8 +322,7 @@ class HighPassAnalysis(Analysis):
 
         six_db_location = -1
         for i in range(cutoff_location, -1, -1):
-            db = RFTools.gain(self.app.data21[i])
-            if (pass_band_db - db) > 6:
+            if (pass_band_db - self.app.data21[i].gain) > 6:
                 # We found 6dB location
                 six_db_location = i
                 break
@@ -338,24 +335,21 @@ class HighPassAnalysis(Analysis):
 
         ten_db_location = -1
         for i in range(cutoff_location, -1, -1):
-            db = RFTools.gain(self.app.data21[i])
-            if (pass_band_db - db) > 10:
+            if (pass_band_db - self.app.data21[i].gain) > 10:
                 # We found 6dB location
                 ten_db_location = i
                 break
 
         twenty_db_location = -1
         for i in range(cutoff_location, -1, -1):
-            db = RFTools.gain(self.app.data21[i])
-            if (pass_band_db - db) > 20:
+            if (pass_band_db - self.app.data21[i].gain) > 20:
                 # We found 6dB location
                 twenty_db_location = i
                 break
 
         sixty_db_location = -1
         for i in range(six_db_location, -1, -1):
-            db = RFTools.gain(self.app.data21[i])
-            if (pass_band_db - db) > 60:
+            if (pass_band_db - self.app.data21[i].gain) > 60:
                 # We found 60dB location! Wow.
                 sixty_db_location = i
                 break
@@ -471,14 +465,13 @@ class BandPassAnalysis(Analysis):
             self.result_label.setText("Please place " + self.app.markers[0].name  + " in the passband.")
             return
 
-        pass_band_db = RFTools.gain(self.app.data21[pass_band_location])
+        pass_band_db = self.app.data21[pass_band_location].gain
 
         logger.debug("Initial passband gain: %d", pass_band_db)
 
         initial_lower_cutoff_location = -1
         for i in range(pass_band_location, -1, -1):
-            db = RFTools.gain(self.app.data21[i])
-            if (pass_band_db - db) > 3:
+            if (pass_band_db - self.app.data21[i].gain) > 3:
                 # We found a cutoff location
                 initial_lower_cutoff_location = i
                 break
@@ -493,8 +486,7 @@ class BandPassAnalysis(Analysis):
 
         initial_upper_cutoff_location = -1
         for i in range(pass_band_location, len(self.app.data21), 1):
-            db = RFTools.gain(self.app.data21[i])
-            if (pass_band_db - db) > 3:
+            if (pass_band_db - self.app.data21[i].gain) > 3:
                 # We found a cutoff location
                 initial_upper_cutoff_location = i
                 break
@@ -508,9 +500,9 @@ class BandPassAnalysis(Analysis):
         logger.debug("Found initial upper cutoff frequency at %d", initial_upper_cutoff_frequency)
 
         peak_location = -1
-        peak_db = RFTools.gain(self.app.data21[initial_lower_cutoff_location])
+        peak_db = self.app.data21[initial_lower_cutoff_location].gain
         for i in range(initial_lower_cutoff_location, initial_upper_cutoff_location, 1):
-            db = RFTools.gain(self.app.data21[i])
+            db = self.app.data21[i].gain
             if db > peak_db:
                 peak_db = db
                 peak_location = i
@@ -520,14 +512,13 @@ class BandPassAnalysis(Analysis):
         lower_cutoff_location = -1
         pass_band_db = peak_db
         for i in range(peak_location, -1, -1):
-            db = RFTools.gain(self.app.data21[i])
-            if (pass_band_db - db) > 3:
+            if (pass_band_db - self.app.data21[i].gain) > 3:
                 # We found the cutoff location
                 lower_cutoff_location = i
                 break
 
         lower_cutoff_frequency = self.app.data21[lower_cutoff_location].freq
-        lower_cutoff_gain = RFTools.gain(self.app.data21[lower_cutoff_location]) - pass_band_db
+        lower_cutoff_gain = self.app.data21[lower_cutoff_location].gain - pass_band_db
 
         if lower_cutoff_gain < -4:
             logger.debug("Lower cutoff frequency found at %f dB - insufficient data points for true -3 dB point.",
@@ -544,14 +535,13 @@ class BandPassAnalysis(Analysis):
         upper_cutoff_location = -1
         pass_band_db = peak_db
         for i in range(peak_location, len(self.app.data21), 1):
-            db = RFTools.gain(self.app.data21[i])
-            if (pass_band_db - db) > 3:
+            if (pass_band_db - self.app.data21[i].gain) > 3:
                 # We found the cutoff location
                 upper_cutoff_location = i
                 break
 
         upper_cutoff_frequency = self.app.data21[upper_cutoff_location].freq
-        upper_cutoff_gain = RFTools.gain(self.app.data21[upper_cutoff_location]) - pass_band_db
+        upper_cutoff_gain = self.app.data21[upper_cutoff_location].gain - pass_band_db
         if upper_cutoff_gain < -4:
             logger.debug("Upper cutoff frequency found at %f dB - insufficient data points for true -3 dB point.",
                          upper_cutoff_gain)
@@ -578,8 +568,7 @@ class BandPassAnalysis(Analysis):
 
         lower_six_db_location = -1
         for i in range(lower_cutoff_location, -1, -1):
-            db = RFTools.gain(self.app.data21[i])
-            if (pass_band_db - db) > 6:
+            if (pass_band_db - self.app.data21[i].gain) > 6:
                 # We found 6dB location
                 lower_six_db_location = i
                 break
@@ -592,24 +581,21 @@ class BandPassAnalysis(Analysis):
 
         ten_db_location = -1
         for i in range(lower_cutoff_location, -1, -1):
-            db = RFTools.gain(self.app.data21[i])
-            if (pass_band_db - db) > 10:
+            if (pass_band_db - self.app.data21[i].gain) > 10:
                 # We found 6dB location
                 ten_db_location = i
                 break
 
         twenty_db_location = -1
         for i in range(lower_cutoff_location, -1, -1):
-            db = RFTools.gain(self.app.data21[i])
-            if (pass_band_db - db) > 20:
+            if (pass_band_db - self.app.data21[i].gain) > 20:
                 # We found 6dB location
                 twenty_db_location = i
                 break
 
         sixty_db_location = -1
         for i in range(lower_six_db_location, -1, -1):
-            db = RFTools.gain(self.app.data21[i])
-            if (pass_band_db - db) > 60:
+            if (pass_band_db - self.app.data21[i].gain) > 60:
                 # We found 60dB location! Wow.
                 sixty_db_location = i
                 break
@@ -638,8 +624,7 @@ class BandPassAnalysis(Analysis):
 
         upper_six_db_location = -1
         for i in range(upper_cutoff_location, len(self.app.data21), 1):
-            db = RFTools.gain(self.app.data21[i])
-            if (pass_band_db - db) > 6:
+            if (pass_band_db - self.app.data21[i].gain) > 6:
                 # We found 6dB location
                 upper_six_db_location = i
                 break
@@ -656,24 +641,21 @@ class BandPassAnalysis(Analysis):
 
         ten_db_location = -1
         for i in range(upper_cutoff_location, len(self.app.data21), 1):
-            db = RFTools.gain(self.app.data21[i])
-            if (pass_band_db - db) > 10:
+            if (pass_band_db - self.app.data21[i].gain) > 10:
                 # We found 6dB location
                 ten_db_location = i
                 break
 
         twenty_db_location = -1
         for i in range(upper_cutoff_location, len(self.app.data21), 1):
-            db = RFTools.gain(self.app.data21[i])
-            if (pass_band_db - db) > 20:
+            if (pass_band_db - self.app.data21[i].gain) > 20:
                 # We found 6dB location
                 twenty_db_location = i
                 break
 
         sixty_db_location = -1
         for i in range(upper_six_db_location, len(self.app.data21), 1):
-            db = RFTools.gain(self.app.data21[i])
-            if (pass_band_db - db) > 60:
+            if (pass_band_db - self.app.data21[i].gain) > 60:
                 # We found 60dB location! Wow.
                 sixty_db_location = i
                 break
@@ -784,9 +766,9 @@ class BandStopAnalysis(Analysis):
             return
 
         peak_location = -1
-        peak_db = RFTools.gain(self.app.data21[0])
+        peak_db = self.app.data21[0].gain
         for i in range(len(self.app.data21)):
-            db = RFTools.gain(self.app.data21[i])
+            db = self.app.data21[i].gain
             if db > peak_db:
                 peak_db = db
                 peak_location = i
@@ -796,14 +778,13 @@ class BandStopAnalysis(Analysis):
         lower_cutoff_location = -1
         pass_band_db = peak_db
         for i in range(len(self.app.data21)):
-            db = RFTools.gain(self.app.data21[i])
-            if (pass_band_db - db) > 3:
+            if (pass_band_db - self.app.data21[i].gain) > 3:
                 # We found the cutoff location
                 lower_cutoff_location = i
                 break
 
         lower_cutoff_frequency = self.app.data21[lower_cutoff_location].freq
-        lower_cutoff_gain = RFTools.gain(self.app.data21[lower_cutoff_location]) - pass_band_db
+        lower_cutoff_gain = self.app.data21[lower_cutoff_location].gain - pass_band_db
 
         if lower_cutoff_gain < -4:
             logger.debug("Lower cutoff frequency found at %f dB - insufficient data points for true -3 dB point.",
@@ -819,14 +800,13 @@ class BandStopAnalysis(Analysis):
 
         upper_cutoff_location = -1
         for i in range(len(self.app.data21)-1, -1, -1):
-            db = RFTools.gain(self.app.data21[i])
-            if (pass_band_db - db) > 3:
+            if (pass_band_db - self.app.data21[i].gain) > 3:
                 # We found the cutoff location
                 upper_cutoff_location = i
                 break
 
         upper_cutoff_frequency = self.app.data21[upper_cutoff_location].freq
-        upper_cutoff_gain = RFTools.gain(self.app.data21[upper_cutoff_location]) - pass_band_db
+        upper_cutoff_gain = self.app.data21[upper_cutoff_location].gain - pass_band_db
         if upper_cutoff_gain < -4:
             logger.debug("Upper cutoff frequency found at %f dB - insufficient data points for true -3 dB point.",
                          upper_cutoff_gain)
@@ -853,8 +833,7 @@ class BandStopAnalysis(Analysis):
 
         lower_six_db_location = -1
         for i in range(lower_cutoff_location, len(self.app.data21)):
-            db = RFTools.gain(self.app.data21[i])
-            if (pass_band_db - db) > 6:
+            if (pass_band_db - self.app.data21[i].gain) > 6:
                 # We found 6dB location
                 lower_six_db_location = i
                 break
@@ -867,24 +846,21 @@ class BandStopAnalysis(Analysis):
 
         ten_db_location = -1
         for i in range(lower_cutoff_location, len(self.app.data21)):
-            db = RFTools.gain(self.app.data21[i])
-            if (pass_band_db - db) > 10:
+            if (pass_band_db - self.app.data21[i].gain) > 10:
                 # We found 6dB location
                 ten_db_location = i
                 break
 
         twenty_db_location = -1
         for i in range(lower_cutoff_location, len(self.app.data21)):
-            db = RFTools.gain(self.app.data21[i])
-            if (pass_band_db - db) > 20:
+            if (pass_band_db - self.app.data21[i].gain) > 20:
                 # We found 6dB location
                 twenty_db_location = i
                 break
 
         sixty_db_location = -1
         for i in range(lower_six_db_location, len(self.app.data21)):
-            db = RFTools.gain(self.app.data21[i])
-            if (pass_band_db - db) > 60:
+            if (pass_band_db - self.app.data21[i].gain) > 60:
                 # We found 60dB location! Wow.
                 sixty_db_location = i
                 break
@@ -912,8 +888,7 @@ class BandStopAnalysis(Analysis):
 
         upper_six_db_location = -1
         for i in range(upper_cutoff_location, -1, -1):
-            db = RFTools.gain(self.app.data21[i])
-            if (pass_band_db - db) > 6:
+            if (pass_band_db - self.app.data21[i].gain) > 6:
                 # We found 6dB location
                 upper_six_db_location = i
                 break
@@ -930,24 +905,21 @@ class BandStopAnalysis(Analysis):
 
         ten_db_location = -1
         for i in range(upper_cutoff_location, -1, -1):
-            db = RFTools.gain(self.app.data21[i])
-            if (pass_band_db - db) > 10:
+            if (pass_band_db - self.app.data21[i].gain) > 10:
                 # We found 6dB location
                 ten_db_location = i
                 break
 
         twenty_db_location = -1
         for i in range(upper_cutoff_location, -1, -1):
-            db = RFTools.gain(self.app.data21[i])
-            if (pass_band_db - db) > 20:
+            if (pass_band_db - self.app.data21[i].gain) > 20:
                 # We found 6dB location
                 twenty_db_location = i
                 break
 
         sixty_db_location = -1
         for i in range(upper_six_db_location, -1, -1):
-            db = RFTools.gain(self.app.data21[i])
-            if (pass_band_db - db) > 60:
+            if (pass_band_db - self.app.data21[i].gain) > 60:
                 # We found 60dB location! Wow.
                 sixty_db_location = i
                 break
@@ -1032,27 +1004,22 @@ class SimplePeakSearchAnalysis(Analysis):
             suffix = ""
             data = []
             for d in self.app.data:
-                vswr = RFTools.calculateVSWR(d)
-                if vswr < 1:
-                    vswr = float('inf')
-                data.append(vswr)
+                data.append(d.vswr)
         elif self.rbtn_data_resistance.isChecked():
             suffix = " \N{OHM SIGN}"
             data = []
             for d in self.app.data:
-                re, im = RFTools.normalize50(d)
-                data.append(re)
+                data.append(d.impedance().real)
         elif self.rbtn_data_reactance.isChecked():
             suffix = " \N{OHM SIGN}"
             data = []
             for d in self.app.data:
-                re, im = RFTools.normalize50(d)
-                data.append(im)
+                data.append(d.impedance().imag)
         elif self.rbtn_data_s21_gain.isChecked():
             suffix = " dB"
             data = []
             for d in self.app.data21:
-                data.append(RFTools.gain(d))
+                data.append(d.gain)
         else:
             logger.warning("Searching for peaks on unknown data")
             return
@@ -1139,11 +1106,11 @@ class PeakSearchAnalysis(Analysis):
         if self.rbtn_data_vswr.isChecked():
             data = []
             for d in self.app.data:
-                data.append(RFTools.calculateVSWR(d))
+                data.append(d.vswr)
         elif self.rbtn_data_s21_gain.isChecked():
             data = []
             for d in self.app.data21:
-                data.append(RFTools.gain(d))
+                data.append(d.gain)
         else:
             logger.warning("Searching for peaks on unknown data")
             return
@@ -1238,7 +1205,7 @@ class VSWRAnalysis(Analysis):
         :param data: array of float
         :param threshold: 
         '''
-        
+
         minimums = []
         min_start = -1
         min_idx = -1
@@ -1268,7 +1235,7 @@ class VSWRAnalysis(Analysis):
         max_dips_shown = self.max_dips_shown
         data = []
         for d in self.app.data:
-            vswr = RFTools.calculateVSWR(d)
+            vswr = d.vswr
             if vswr < 1:
                 vswr = float('inf')
             data.append(vswr)

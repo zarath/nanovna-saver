@@ -21,6 +21,7 @@ from numbers import Number
 PREFIXES = ("y", "z", "a", "f", "p", "n", "µ", "m",
             "", "k", "M", "G", "T", "P", "E", "Z", "Y")
 
+
 class Format(NamedTuple):
     max_nr_digits: int = 6
     fix_decimals: bool = False
@@ -28,11 +29,12 @@ class Format(NamedTuple):
     assume_infinity: bool = True
     min_offset: int = -8
     max_offset: int = 8
+    allow_strip: bool = False
     parse_sloppy_unit: bool = False
     parse_sloppy_kilo: bool = False
 
 
-class Value():
+class Value:
     def __init__(self, value: Number = 0, unit: str = "", fmt=Format()):
         assert 3 <= fmt.max_nr_digits <= 27
         assert -8 <= fmt.min_offset <= fmt.max_offset <= 8
@@ -73,6 +75,9 @@ class Value():
         if float(result) == 0.0:
             offset = 0
 
+        if self.fmt.allow_strip and "." in result:
+            result = result.rstrip("0").rstrip(".")
+            
         return result + fmt.space_str + PREFIXES[offset + 8] + self._unit
 
     def parse(self, value: str) -> float:
