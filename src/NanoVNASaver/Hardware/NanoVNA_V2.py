@@ -18,7 +18,7 @@
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import logging
 import platform
-from struct import pack, unpack_from
+from struct import pack, unpack, unpack_from
 from time import sleep
 
 from NanoVNASaver.Hardware.Serial import Interface
@@ -48,6 +48,7 @@ _ADDR_SWEEP_POINTS = 0x20
 _ADDR_SWEEP_VALS_PER_FREQ = 0x22
 _ADDR_RAW_SAMPLES_MODE = 0x26
 _ADDR_VALUES_FIFO = 0x30
+_ADDR_UNIX_TIME = 0x58
 _ADDR_DEVICE_VARIANT = 0xF0
 _ADDR_PROTOCOL_VERSION = 0xF1
 _ADDR_HARDWARE_REVISION = 0xF2
@@ -229,6 +230,16 @@ class NanoVNA_V2(VNA):
     def resetSweep(self, start: int, stop: int):
         self.setSweep(start, stop)
 
+    def _read_timer(self):
+        cmd = pack("<BB", _CMD_READ4, _ADDR_UNIX_TIME)
+        with self.serial.lock:
+            self.serial.write(cmd)
+            resp = self.serial.read(4)
+        if len(resp) != 4:
+            logger.error("Timeout reading timer registers. Got: %s", resp)
+            raise IOError("Timeout reading version registers")
+        logger.debug("Timer %s", unpack("<l", resp)[0])
+
     def _read_version(self, cmd_0: int, cmd_1: int):
         cmd = pack("<BBBB", _CMD_READ, cmd_0, _CMD_READ, cmd_1)
         with self.serial.lock:
@@ -245,6 +256,9 @@ class NanoVNA_V2(VNA):
     def readVersion(self) -> "Version":
         result = self._read_version(_ADDR_FW_MAJOR, _ADDR_FW_MINOR)
         logger.debug("readVersion: %s", result)
+        self._read_timer()
+        sleep(1.1)
+        self._read_timer()
         return result
 
     def read_board_revision(self) -> "Version":
